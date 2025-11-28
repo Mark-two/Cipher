@@ -45,8 +45,18 @@ class SM4Processor:
                 result_bytes = sm4_obj.crypt_ecb(data_bytes)
             else:  # CBC 模式
                 result_bytes = sm4_obj.crypt_cbc(iv_bytes, data_bytes)
+            
+            # 6. 对于 NoPad 模式，如果输出长度不等于输入长度，截取到输入长度
+            # 这是因为 gmssl 库在某些模式下可能添加了填充
+            if len(result_bytes) != len(data_bytes):
+                result_bytes = result_bytes[:len(data_bytes)]
 
-            # 6. 返回结果
+            # 6. 对于 NoPad 模式，如果输出长度不等于输入长度，截取到输入长度
+            # 这是因为 gmssl 库在某些模式下可能添加了填充
+            if len(result_bytes) != len(data_bytes):
+                result_bytes = result_bytes[:len(data_bytes)]
+
+            # 7. 返回结果
             result_hex = binascii.hexlify(result_bytes).decode('utf-8')
             return True, result_hex
             
