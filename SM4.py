@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-from gmssl import sm4
+from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
 import os
 import binascii
 
@@ -36,18 +36,15 @@ class SM4Processor:
             if len(data_bytes) % SM4Processor.BLOCK_SIZE != 0:
                 return False, f"NoPad 模式要求数据长度必须是 {SM4Processor.BLOCK_SIZE} 字节的整数倍。"
 
-            # 4. 初始化 SM4 对象
-            sm4_obj = sm4.CryptSM4(key_bytes, mode=mode)
+            # 4. 初始化 SM4 对象 (padding_mode=2 表示无填充 NoPad)
+            sm4_obj = CryptSM4(padding_mode=2)
+            sm4_obj.set_key(key_bytes, SM4_ENCRYPT if action == 'encrypt' else SM4_DECRYPT)
             
             # 5. 执行操作
-            if action == 'encrypt':
-                if iv_bytes:
-                    sm4_obj.set_iv(iv_bytes)
-                result_bytes = sm4_obj.encrypt(data_bytes)
-            else: # action == 'decrypt'
-                if iv_bytes:
-                    sm4_obj.set_iv(iv_bytes)
-                result_bytes = sm4_obj.decrypt(data_bytes)
+            if mode == 'ECB':
+                result_bytes = sm4_obj.crypt_ecb(data_bytes)
+            else:  # CBC 模式
+                result_bytes = sm4_obj.crypt_cbc(iv_bytes, data_bytes)
 
             # 6. 返回结果
             result_hex = binascii.hexlify(result_bytes).decode('utf-8')
